@@ -14,7 +14,7 @@ class Item(BaseModel):
 
 # Dictionnaire pour stocker les items
 items_db: Dict[int, Item] = {}
-current_id = 0  # ID pour générer des identifiants uniques pour les items
+current_id = 0
 
 @app.get("/")
 def read_root():

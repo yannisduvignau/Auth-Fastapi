@@ -34,7 +34,7 @@ class UserCreate(BaseModel):
     username: str
     email: EmailStr
     full_name: Union[str, None] = None
-    password: str  # Ajout d'un champ pour le mot de passe
+    password: str
 
 # Modèle pour représenter un utilisateur dans la base de données avec le mot de passe haché
 class UserInDB(User):
@@ -64,51 +64,51 @@ def authenticate_user(db, username: str, password: str):
     """Authentifie un utilisateur en vérifiant son nom d'utilisateur et son mot de passe."""
     user = get_user(db, username)
     if not user:
-        return False  # Utilisateur non trouvé
+        return False
     if not verify_password(password, user.hashed_password):
-        return False  # Mot de passe incorrect
+        return False
     
-    return user  # Retourne l'utilisateur si l'authentification réussit
+    return user
 
 def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
     """Crée un token d'accès avec une date d'expiration."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta  # Date d'expiration personnalisée
+        expire = datetime.now() + expires_delta  # Date d'expiration personnalisée
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)  # Date d'expiration par défaut de 15 minutes
+        expire = datetime.now() + timedelta(minutes=15)
         
     to_encode.update({"exp": expire})  # Ajoute la date d'expiration au payload
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)  # Encode le token
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     
-    return encoded_jwt  # Retourne le token encodé
+    return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Récupère l'utilisateur actuel à partir du token fourni."""
     credential_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Couldn't validate credentials", headers={"WWW-Authenticate": "Bearer"})
     
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])  # Décode le token
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")  # Récupère le nom d'utilisateur du payload
         if username is None:
-            raise credential_exception  # Lève une exception si le nom d'utilisateur est absent
+            raise credential_exception
         
         token_data = TokenData(username=username)
     except JWTError:
-        raise credential_exception  # Lève une exception en cas d'erreur de décodage
+        raise credential_exception
     
-    user = get_user(db, username=token_data.username)  # Récupère l'utilisateur de la base de données
+    user = get_user(db, username=token_data.username)
     if user is None:
-        raise credential_exception  # Lève une exception si l'utilisateur n'existe pas
+        raise credential_exception
 
-    return user  # Retourne l'utilisateur
+    return user
 
 async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
     """Vérifie si l'utilisateur actuel est actif (non désactivé)."""
     if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")  # Lève une exception si l'utilisateur est désactivé
+        raise HTTPException(status_code=400, detail="Inactive user")
     
-    return current_user  # Retourne l'utilisateur actif
+    return current_user
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -146,9 +146,9 @@ async def register(user: UserCreate):
 @app.get("/users/me/", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_active_user)):
     """Endpoint pour récupérer les informations de l'utilisateur actuel."""
-    return current_user  # Retourne l'utilisateur actuel
+    return current_user
 
 @app.get("/users/me/items")
 async def read_own_items(current_user: User = Depends(get_current_active_user)):
     """Endpoint pour récupérer les éléments de l'utilisateur actuel."""
-    return [{"item_id": 1, "owner": current_user}]  # Retourne une liste d'éléments appartenant à l'utilisateur
+    return [{"item_id": 1, "owner": current_user}]

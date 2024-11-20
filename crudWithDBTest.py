@@ -39,6 +39,10 @@ def get_db():
     finally:
         db.close()
 
+
+
+
+
 @app.post("/items/", response_model=Item)
 def create_item(item: Item, db: Session = Depends(get_db)):
     """Crée un nouvel item dans la base de données."""

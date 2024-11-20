@@ -4,7 +4,6 @@
     - deactivate
 
 
-
 2. ### Installer FastApi et Uvicorn(web server)
     - pip install fastapi uvicorn
 
